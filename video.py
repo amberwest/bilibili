@@ -16,11 +16,15 @@ from utils import create_folder, concatenate
 urllib3.disable_warnings()
 
 class BiliDownload(object):
+    """
+    初始化时传入视频id即可下载视频，默认存储在当前目录下的video文件夹，也可以自己传入新的目录
+    """
     headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36',
     }
-    def __init__(self, aid):
+    def __init__(self, aid, dest='video'):
         self.aid = aid
+        self.dest = dest
         self.title = ''
 
     def get_vedio_info(self):
@@ -57,9 +61,6 @@ class BiliDownload(object):
             header = {
                 'Origin': 'https://www.bilibili.com',
                 'Referer': video_url,
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) '
-                              'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 '
-                              'Safari/537.36',
             }
             self.headers.update(header)
             try:
@@ -77,14 +78,11 @@ class BiliDownload(object):
                 print(e)
         stop = time.time()
         print('\n' + '视频下载完成，耗时%.2f秒' % (stop-start))
-        print('开始合并视频...')
         # 合并视频
-        print(self.title)
-        concatenate(path=self.title)
-        print('视频合并完成！')
+        concatenate(path=self.title, dest=self.dest)
 
 if __name__ == '__main__':
-    # aid = sys.argv[1]
-    aid = '28518492'
-    bili = BiliDownload(aid)
-    bili.download_video()
+    # aid = sys.argv[1], '28518492', '17882115'
+    for aid in ['28518492']:
+        bili = BiliDownload(aid)
+        bili.download_video()

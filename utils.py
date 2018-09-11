@@ -7,14 +7,12 @@ import subprocess
 
 locale.getpreferredencoding()
 
-
 def create_folder(path):
     """根据提供的路径，path不存在则新建文件夹，也可以有子文件夹"""
     if not os.path.exists(path):
         os.makedirs(path)
 
-
-def concatenate(path, dest='video'):
+def concatenate(path, dest):
     """
     将给定路径下的视频进行合并，同时删除原本的视频
     :param path: 需要合并的视频所在文件夹名字，一般是视频名字
@@ -29,12 +27,19 @@ def concatenate(path, dest='video'):
                     line = "file '{}'\n".format(video_path)
                     f.writelines(line)
 
-    create_folder(dest)
-    video_save_path = os.path.join(dest, path)
-
     # 合并视频
     if os.path.exists('file.txt'):
-        ffmpeg_command = ["ffmpeg", "-f", "concat", "-safe", "0" , "-i", "file.txt", "-c", "copy", video_save_path+".mp4"]
-        subprocess.run(ffmpeg_command)
-        subprocess.run(["rm", "file.txt"])
-        subprocess.run(["rm", "-r", path])
+        create_folder(dest)
+        video_save_path = os.path.join(dest, path)
+        try:
+            print('开始合并视频...')
+            print(path)
+            ffmpeg_command = ["ffmpeg", "-f", "concat", "-safe", "0", "-i", "file.txt", "-c", "copy",
+                              video_save_path + ".mp4"]
+            subprocess.run(ffmpeg_command)
+            subprocess.run(["rm", "file.txt"])
+            subprocess.run(["rm", "-r", path])
+            print('视频合并完成！')
+        except Exception as e:
+            print('视频合并失败')
+            print(e)
