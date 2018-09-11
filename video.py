@@ -82,7 +82,7 @@ class BiliDownload(object):
         concatenate(path=self.title, dest=self.dest)
 
 if __name__ == '__main__':
-    # aid = sys.argv[1], '28518492', '17882115'
-    for aid in ['28518492']:
-        bili = BiliDownload(aid)
-        bili.download_video()
+    # aid = sys.argv[1]
+    aid = '28518492'
+    bili = BiliDownload(aid)
+    bili.download_video()
