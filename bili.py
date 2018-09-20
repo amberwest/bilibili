@@ -6,6 +6,7 @@ import re
 import urllib3
 import requests
 from bs4 import BeautifulSoup as soup
+from scrapy import Selector
 
 from utils import create_folder
 
@@ -31,7 +32,9 @@ def get_danmu():
     res = requests.get(danmu_url, params=danmu_params, headers=headers, verify=False)
     try:
         response = res.content.decode('utf-8')
-        print(response)
+        selector = Selector(text=response)
+        for d in selector.css('d'):
+            print(d.css('::text').extract_first())
     except Exception as e:
         print(e)
 
@@ -43,8 +46,9 @@ def get_vedio_info():
     }
     res = requests.get(url, params=para, headers=headers, verify=False)
     title=res.json()['data']['title']
+    print(res.json())
     print(res.json()['data']['cid'])        # 弹幕cid参数
     print(title)
-    create_folder(title)
 
-get_vedio_info()
+# get_vedio_info()
+get_danmu()
