@@ -5,8 +5,6 @@ import json
 
 import re
 
-import requests
-import sys
 import os
 
 import time
@@ -18,33 +16,26 @@ from setting import BASE_DIR
 
 urllib3.disable_warnings()
 
-class BiliDownload(object):
+class VideoDownload(object):
     """
-    初始化时传入视频id即可下载视频，默认存储在当前目录下的video文件夹，也可以自己传入新的目录
+    初始化时传入视频url即可下载视频，默认存储在当前目录下的video文件夹，也可以自己传入新的目录
     """
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36',
-    }
-    def __init__(self, aid, dest='video'):
-        self.aid = aid
-        self.dest = os.path.join(BASE_DIR, dest)
-        self.info = ''
 
-    def get_vedio_info(self):
+    @classmethod
+    def get_vedio_info(cls, url):
         """获取视频相关信息,aid，cid，点赞数等等"""
+        aid = re.sub('[a-z]+', '', parse_url(url))
         url = "https://api.bilibili.com/x/web-interface/view"
         para = {
-            'aid': str(self.aid),
+            'aid': aid,
         }
         res = get_page(url, params=para)
-        self.info = res.json()
-        title = self.info['data']['title']
-        # 创建文件夹
-        create_folder(os.path.join(BASE_DIR, title))
+        info = res.json()
+        return info
 
-    def get_danmu(self):
-        # 弹幕,oid在视频相关信息json中是cid字段
-        cid = self.info['data']['cid']
+    @classmethod
+    def get_danmu(cls, cid):
+        """获取视频对应的弹幕信息"""
         danmu_url = 'https://api.bilibili.com/x/v1/dm/list.so?oid={}'.format(cid)
 
         res = get_page(danmu_url)
@@ -57,26 +48,27 @@ class BiliDownload(object):
                 danmu.append({'txt': txt})
         except Exception as e:
             print(e)
+        return danmu
 
-    def download_video(self):
+    # TODO: 目前只能抓取类似'https://www.bilibili.com/video/av28518492'的链接
+    @classmethod
+    def download_video(cls, page_url, title, dest='video'):
         """从视频页面获取到视频链接进行下载"""
-        # video_url = 'https://www.bilibili.com/video/av28518492'
-
-        self.get_vedio_info()
-        title = self.info['data']['title']
-
-        video_url = 'https://www.bilibili.com/video/av{}'.format(str(self.aid))
-        res = get_page(video_url, header=self.headers, **{'verify':False})
+        res = get_page(page_url, **{'verify': False})
 
         # 从网页源码获取视频链接
         origin_txt = re.findall(r'<script>window.__playinfo__=(\{.*?\})</script>', res.text, re.S)[0]
         origin_json = json.loads(origin_txt, encoding='utf-8')
         urls = origin_json['durl']
 
+        # 下载视频
         size = 0
         chunk = 1024
         content_size = sum([i['size'] for i in urls])
         print('文件大小： %0.2fMB' % (content_size / chunk / 1024))
+
+        # 创建存放视频临时文件夹
+        create_folder(os.path.join(BASE_DIR, title))
 
         start = time.time()
 
@@ -84,8 +76,10 @@ class BiliDownload(object):
         for i, data in enumerate(urls):
             url = data['url']
             header = {
-                'Origin': 'https://www.bilibili.com', 'Referer': video_url,
+                'Origin': 'https://www.bilibili.com',
+                'Referer': page_url,
             }
+
             try:
                 # 请求视频链接
                 response = get_page(url, header=header, **{
@@ -100,16 +94,19 @@ class BiliDownload(object):
                         size += len(item)
                         print('\r' + '[下载进度]：%s %0.2f%%' % (
                             '>' * int(size * 50 / content_size), float(size / content_size) * 100), end='')
-
             except Exception as e:
                 print(e)
+
         stop = time.time()
         print('\n' + '视频下载完成，耗时%.2f秒' % (stop - start))
-        # 合并视频
-        concatenate(path=title, dest=self.dest)
 
-if __name__ == '__main__':
-    # aid = sys.argv[1] 31705434    25249   28518492 19852845
-    aid = '19852845'
-    bili = BiliDownload(aid)
-    bili.download_video()  # bili.get_vedio_info()  # bili.get_danmu()
+        # 合并视频
+        dest = os.path.join(BASE_DIR, dest)
+        video_save_path = concatenate(path=title, dest=dest)
+
+        video = {
+            'title': title,
+            'url': page_url,
+            'path': video_save_path
+        }
+        return video

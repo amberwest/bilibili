@@ -71,7 +71,7 @@ def concatenate(path, dest):
     将给定路径下的视频进行合并保存到dest目录下，同时删除原本的视频
     :param path: 需要合并的视频所在文件夹名字，一般是视频名字
     :param dest: 合并之后的视频存放路径，默认为video文件夹
-    :return:
+    :return: 视频最终保存路径
     """
     # 保存分段视频的临时文件
     temp_file = path + '.txt'
@@ -85,21 +85,23 @@ def concatenate(path, dest):
                     line = "file '{}'\n".format(video_path)
                     f.writelines(line)
 
-    # 合并视频
+    # 存放合并好的视频路径，video文件夹
     if not os.path.exists(dest):
-        # 存放合并好的视频路径，video文件夹
         create_folder(dest)
 
-        # 视频文件
-        video_save_path = os.path.normpath(os.path.join(BASE_DIR, dest, path))
-        try:
-            print('开始合并视频...')
-            ffmpeg_command = ["ffmpeg", "-f", "concat", "-safe", "0", "-i", temp_file, "-c", "copy",
-                              video_save_path + ".mp4"]
-            # 合并之后，将多余文件删除
-            subprocess.run(ffmpeg_command)
-            subprocess.run(["rm", temp_file])
-            subprocess.run(["rm", "-r", path])
-            print('视频合并完成！')
-        except Exception as e:
-            print('视频合并失败：', e)
+    # 合并后的视频文件存放地址
+    video_save_path = os.path.normpath(os.path.join(BASE_DIR, dest, path))
+    try:
+        print('开始合并视频...')
+        ffmpeg_command = ["ffmpeg", "-f", "concat", "-safe", "0", "-i", temp_file, "-c", "copy",
+                          video_save_path + ".mp4"]
+        # 合并之后，将多余文件删除
+        subprocess.run(ffmpeg_command)
+        subprocess.run(["rm", temp_file])
+        subprocess.run(["rm", "-r", path])
+        print('视频合并完成！')
+        return video_save_path + ".mp4"
+
+    except Exception as e:
+        print('视频合并失败：', e)
+        return None

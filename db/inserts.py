@@ -2,8 +2,8 @@
 # Time: 2018/9/20 15:06
 from contextlib import contextmanager
 
-from db import Base, Session
-from models import Video, VideoInfo, Danmu
+from db.base import Session
+from db.models import Video, VideoInfo, Danmu
 
 @contextmanager
 def session_scope(Session):
@@ -17,7 +17,7 @@ def session_scope(Session):
     finally:
         session.close()
 
-def insert(info, video, danmu):
+def insert(info, danmu, video):
     """持久化到mysql"""
     # 信息表
     stat = info['data']['stat']
@@ -57,3 +57,4 @@ def insert(info, video, danmu):
         session.add(i)
         session.add_all(res)
         session.add(v)
+

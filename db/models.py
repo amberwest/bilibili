@@ -3,7 +3,7 @@
 from datetime import datetime
 from sqlalchemy import Column, String, ForeignKey, Integer, DateTime, Text
 from sqlalchemy.orm import relationship
-from db import Base, engine
+from db.base import Base, engine
 
 class Video(Base):
     """已下载视频的存储信息，跟VideoInfo是一对一的关系"""
@@ -13,6 +13,8 @@ class Video(Base):
     id = Column(Integer, primary_key=True)
     # 视频名称
     title = Column(String(100))
+    # 视频链接
+    url = Column(String(200))
     # 视频保存路径
     path = Column(String(50))
     # 视频添加时间
@@ -20,7 +22,6 @@ class Video(Base):
     # 外键，通过视频信息表的id找到aid
     info_id = Column(Integer, ForeignKey('videoinfo.id'))
     # 与视频信息表是一对一，uselist=False, 信息表可以通过video属性访问到视频内容，back_populates则需要两边都设置
-    # info = relationship('VideoInfo', backref=backref('video', uselist=False))
     info = relationship('VideoInfo', back_populates='video', uselist=False)
 
 

@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 # Time: 2018/9/16 14:19
 
-from sqlalchemy import create_engine, MetaData
+from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from setting import *
