@@ -6,6 +6,8 @@ import os
 import subprocess
 
 import re
+from contextlib import contextmanager
+
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
@@ -34,7 +36,7 @@ def get_page(url, method='get', params=None, header={}, **kw):
     """请求页面"""
     headers = dict(base_header, **header)
     session = request_retry_session()
-    print('正在抓取：', url)
+    # print('正在抓取：', url)
 
     try:
         if method == 'get':
@@ -66,19 +68,19 @@ def create_folder(path):
     if not os.path.exists(path):
         os.makedirs(path)
 
-def concatenate(path, dest):
+def concatenate(title, dest):
     """
     将给定路径下的视频进行合并保存到dest目录下，同时删除原本的视频
-    :param path: 需要合并的视频所在文件夹名字，一般是视频名字
+    :param title: 需要合并的视频所在文件夹名字，用的是视频名字
     :param dest: 合并之后的视频存放路径，默认为video文件夹
     :return: 视频最终保存路径
     """
     # 保存分段视频的临时文件
-    temp_file = path + '.txt'
+    temp_file = title + '.txt'
 
     # 将分段视频路径写入temp_file
     with open(temp_file, 'a', encoding='utf-8') as f:
-        for root, dirs, files in os.walk(path):
+        for root, dirs, files in os.walk(title):
             for file in files:
                 if os.path.splitext(file)[1] in ['.flv', '.mkv', '.mp4']:
                     video_path = os.path.join(root, file)
@@ -90,7 +92,7 @@ def concatenate(path, dest):
         create_folder(dest)
 
     # 合并后的视频文件存放地址
-    video_save_path = os.path.normpath(os.path.join(BASE_DIR, dest, path))
+    video_save_path = os.path.normpath(os.path.join(BASE_DIR, dest, title))
     try:
         print('开始合并视频...')
         ffmpeg_command = ["ffmpeg", "-f", "concat", "-safe", "0", "-i", temp_file, "-c", "copy",
@@ -98,10 +100,29 @@ def concatenate(path, dest):
         # 合并之后，将多余文件删除
         subprocess.run(ffmpeg_command)
         subprocess.run(["rm", temp_file])
-        subprocess.run(["rm", "-r", path])
+        subprocess.run(["rm", "-r", title])
         print('视频合并完成！')
         return video_save_path + ".mp4"
 
     except Exception as e:
         print('视频合并失败：', e)
         return None
+
+
+@contextmanager
+def session_scope(Session):
+    """
+    将session变成上下文对象，这样就不用手动提交、关闭session了。代码执行顺序如下：
+    1、with语句中先执行yield之前的代码
+    2、yield调用会执行with语句中的所有代码
+    3、执行yield之后的代码
+    """
+    session = Session()
+    try:
+        yield session
+        session.commit()
+    except:
+        session.rollback()
+        raise
+    finally:
+        session.close()

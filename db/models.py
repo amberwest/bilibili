@@ -5,8 +5,9 @@ from sqlalchemy import Column, String, ForeignKey, Integer, DateTime, Text
 from sqlalchemy.orm import relationship
 from db.base import Base, engine
 
+
 class Video(Base):
-    """已下载视频的存储信息，跟VideoInfo是一对一的关系"""
+    """已下载视频的存储信息"""
     __tablename__ = 'video'
 
     # 数据库id
@@ -16,12 +17,12 @@ class Video(Base):
     # 视频链接
     url = Column(String(200))
     # 视频保存路径
-    path = Column(String(50))
+    path = Column(String(200))
     # 视频添加时间
     time_created = Column(DateTime(), default=datetime.now)
     # 外键，通过视频信息表的id找到aid
     info_id = Column(Integer, ForeignKey('videoinfo.id'))
-    # 与视频信息表是一对一，uselist=False, 信息表可以通过video属性访问到视频内容，back_populates则需要两边都设置
+    # 与视频信息表是一对一，uselist=False, 信息表可以通过video属性访问到视频内容，back_populates需要两边都设置
     info = relationship('VideoInfo', back_populates='video', uselist=False)
 
 
@@ -31,7 +32,7 @@ class VideoInfo(Base):
 
     id = Column(Integer, primary_key=True)
     # 视频标题
-    title = Column(String(100))
+    title = Column(String(200))
     # 视频封面
     pic = Column(String(200))
     # 弹幕数量
@@ -59,7 +60,7 @@ class VideoInfo(Base):
     # up主id
     owner_id = Column(String(30))
     # up主昵称
-    owner_name = Column(String(50))
+    owner_name = Column(String(100))
     # up主头像
     owner_face = Column(String(200))
     # 弹幕库id，也就是cid字段，是弹幕库表的外键
@@ -67,7 +68,7 @@ class VideoInfo(Base):
     # 添加时间
     time_created = Column(DateTime(), default=datetime.now)
     # 更新时间
-    time_updated = Column(DateTime(),default=datetime.now, onupdate=datetime.now)
+    time_updated = Column(DateTime(), default=datetime.now, onupdate=datetime.now)
     # 跟video表是一对一关系
     video = relationship('Video', back_populates="info")
     # 跟danmu表是一对多关系

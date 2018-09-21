@@ -102,7 +102,7 @@ class VideoDownload(object):
 
         # 合并视频
         dest = os.path.join(BASE_DIR, dest)
-        video_save_path = concatenate(path=title, dest=dest)
+        video_save_path = concatenate(title=title, dest=dest)
 
         video = {
             'title': title,

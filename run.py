@@ -35,7 +35,7 @@ def run(url):
         video = VideoDownload.download_video(url, title)
         print(danmu)
         print(video)
-        # insert(info, danmu, video)
+        insert(info, danmu, video)
 
 if __name__ == '__main__':
     video_url = 'https://www.bilibili.com/video/av28518492'

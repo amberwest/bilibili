@@ -1,21 +1,10 @@
 # -*- coding:utf-8 -*-
 # Time: 2018/9/20 15:06
-from contextlib import contextmanager
 
 from db.base import Session
 from db.models import Video, VideoInfo, Danmu
+from utils import session_scope
 
-@contextmanager
-def session_scope(Session):
-    session = Session()
-    try:
-        yield session
-        session.commit()
-    except:
-        session.rollback()
-        raise
-    finally:
-        session.close()
 
 def insert(info, danmu, video):
     """持久化到mysql"""
@@ -45,14 +34,16 @@ def insert(info, danmu, video):
     res = []
     for item in danmu:
         d = Danmu(danmu=item['txt'],
-                      info_id=i.id)
+                  info=i)
         res.append(d)
 
     # 视频表
     v = Video(title=video['title'],
-                  path=video['path'],
-                  info_id=i.id,
+              path=video['path'],
+              url=video['url'],
+              info=i,
                   )
+
     with session_scope(Session) as session:
         session.add(i)
         session.add_all(res)
