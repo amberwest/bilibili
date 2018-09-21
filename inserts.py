@@ -17,21 +17,12 @@ def session_scope(Session):
     finally:
         session.close()
 
-
-def save_video(data, info):
-    video = Video(title=data['title'],
-                  path=data['path'],
-                  info_id=info.id,
-                  )
-
-    with session_scope(Session) as session:
-        session.add(video)
-
-
-def save_videoinfo(data, danmu):
-    stat = data['data']['stat']
-    data = data['data']
-    info = VideoInfo(title=data['title'],
+def insert(info, video, danmu):
+    """持久化到mysql"""
+    # 信息表
+    stat = info['data']['stat']
+    data = info['data']
+    i = VideoInfo(title=data['title'],
                      pic=data['pic'],
                      danmaku=stat['danmaku'],
                      dislike=stat['dislike'],
@@ -42,7 +33,6 @@ def save_videoinfo(data, danmu):
                      coin=stat['coin'],
                      favorite=stat['favorite'],
                      aid=stat['aid'],
-                     # v_type='',  # av3456789前的av，这个怎么设计好呢，麻烦
                      tname=data['tname'],
                      owner_id=data['owner']['mid'],
                      owner_face=data['owner']['face'],
@@ -51,17 +41,19 @@ def save_videoinfo(data, danmu):
                      pubdate=data['pubdate']
                      )
 
-    with session_scope(Session) as session:
-        session.add(info)
-
-
-def save_danmu(data, info):
+    # 弹幕表
     res = []
-    for item in data:
-        danmu = Danmu(danmu=item['txt'],
-                      info_id=info.id)
-        res.append(danmu)
+    for item in danmu:
+        d = Danmu(danmu=item['txt'],
+                      info_id=i.id)
+        res.append(d)
+
+    # 视频表
+    v = Video(title=video['title'],
+                  path=video['path'],
+                  info_id=i.id,
+                  )
     with session_scope(Session) as session:
-        session.bulk_save_object(res)
-
-
+        session.add(i)
+        session.add_all(res)
+        session.add(v)

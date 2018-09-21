@@ -2,65 +2,8 @@
 # Time: 2018/9/13 10:08
 from datetime import datetime
 from sqlalchemy import Column, String, ForeignKey, Integer, DateTime, Text
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.sql import func
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import relationship
 from db import Base, engine
-
-
-# class BaseDB(object):
-#     """
-#     定义一些基本的数据库操作方法照抄别人的例子，未修改。别人是在定义的表后相对应的增加这些方法，有没有什么办法可以一次性适应全部的表格
-#     https://blog.csdn.net/dutsoft/article/details/74842722
-#     """
-#     @classmethod
-#     def to_dict(cls, row):
-#         """增强可读性？能否自动生成字典？循环每个属性值？"""
-#         if not row:
-#             return None
-#         d = {
-#             'id': row.id,
-#             'aid': row.aid,
-#         }
-#         return d
-#
-#     @classmethod
-#     def get(cls, session, user_id):
-#         row = session.query(cls).filter(cls.id == user_id).first()
-#         return cls.to_dict(row)
-#
-#     @classmethod
-#     def update(cls, session, user_id, name, password):
-#         try:
-#             session.query(cls.id == user_id).update({cls.name: name, cls.password:password})
-#             session.commit()
-#             return True
-#         except Exception as e:
-#             print(e)
-#             return False
-#
-#     @classmethod
-#     def add(cls, session, name, password):
-#         user = cls(name=name,
-#                    password=password)
-#         session.add(user)
-#         try:
-#             session.commit()
-#             return user.id
-#         except Exception as e:
-#             print(e)
-#             return None
-#
-#     @classmethod
-#     def remove(cls, session, user_id):
-#         try:
-#             session.query(cls.id==user_id).delete()
-#             session.commit()
-#             return True
-#         except Exception as e:
-#             print(e)
-#             return False
-
 
 class Video(Base):
     """已下载视频的存储信息，跟VideoInfo是一对一的关系"""
@@ -76,8 +19,9 @@ class Video(Base):
     time_created = Column(DateTime(), default=datetime.now)
     # 外键，通过视频信息表的id找到aid
     info_id = Column(Integer, ForeignKey('videoinfo.id'))
-    # 与视频信息表是一对一，uselist=False, 信息表可以通过video属性访问到视频内容，back_populate则需要两边都设置
-    info = relationship('VideoInfo', backref=backref('video', uselist=False))
+    # 与视频信息表是一对一，uselist=False, 信息表可以通过video属性访问到视频内容，back_populates则需要两边都设置
+    # info = relationship('VideoInfo', backref=backref('video', uselist=False))
+    info = relationship('VideoInfo', back_populates='video', uselist=False)
 
 
 class VideoInfo(Base):
@@ -105,10 +49,8 @@ class VideoInfo(Base):
     coin = Column(String(30))
     # 收藏数
     favorite = Column(String(30))
-    # 视频id，是视频表的外键
-    aid = Column(String(30), nullable=False)
-    # 视频类型
-    v_type = Column(String(20))
+    # 视频id，加上类型的，是视频表的外键
+    aid = Column(String(30), nullable=False, unique=True)
     # 视频类型？
     tname = Column(String(50))
     # 视频上传时间
@@ -125,6 +67,10 @@ class VideoInfo(Base):
     time_created = Column(DateTime(), default=datetime.now)
     # 更新时间
     time_updated = Column(DateTime(),default=datetime.now, onupdate=datetime.now)
+    # 跟video表是一对一关系
+    video = relationship('Video', back_populates="info")
+    # 跟danmu表是一对多关系
+    danmu = relationship('Danmu', back_populates="info")
 
 
 class Danmu(Base):
@@ -136,9 +82,9 @@ class Danmu(Base):
     danmu = Column(Text)
     time_created = Column(DateTime(), default=datetime.now)
     time_updated = Column(DateTime(), default=datetime.now, onupdate=datetime.now)
-    # 外键，tablename.column_name
+    # 跟信息表是多对一的关系，tablename.column_name
     info_id = Column(Integer, ForeignKey('videoinfo.id'))
-    info = relationship('VideoInfo', backref=backref('danmu'))
+    info = relationship('VideoInfo', back_populates='danmu')
 
 
 if __name__ == '__main__':

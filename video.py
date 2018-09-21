@@ -14,7 +14,6 @@ import urllib3
 from scrapy import Selector
 
 from utils import create_folder, concatenate, get_page, parse_url
-from inserts import save_videoinfo
 from setting import BASE_DIR
 
 urllib3.disable_warnings()
@@ -37,7 +36,7 @@ class BiliDownload(object):
         para = {
             'aid': str(self.aid),
         }
-        res = requests.get(url, params=para, headers=self.headers, verify=False)
+        res = get_page(url, params=para)
         self.info = res.json()
         title = self.info['data']['title']
         # 创建文件夹
@@ -49,14 +48,13 @@ class BiliDownload(object):
         danmu_url = 'https://api.bilibili.com/x/v1/dm/list.so?oid={}'.format(cid)
 
         res = get_page(danmu_url)
+        danmu = []
         try:
             response = res.content.decode('utf-8')
             selector = Selector(text=response)
-            danmu = []
             for d in selector.css('d'):
                 txt = d.css('::text').extract_first()
                 danmu.append({'txt': txt})
-            save_videoinfo(self.info, danmu)
         except Exception as e:
             print(e)
 
@@ -68,7 +66,7 @@ class BiliDownload(object):
         title = self.info['data']['title']
 
         video_url = 'https://www.bilibili.com/video/av{}'.format(str(self.aid))
-        res = requests.get(video_url, headers=self.headers, verify=False)
+        res = get_page(video_url, header=self.headers, **{'verify':False})
 
         # 从网页源码获取视频链接
         origin_txt = re.findall(r'<script>window.__playinfo__=(\{.*?\})</script>', res.text, re.S)[0]
@@ -82,18 +80,17 @@ class BiliDownload(object):
 
         start = time.time()
 
-        # import urllib.request
-        # urllib.request.urlretrieve(url_link, video_name.mp4)
-
         # 循环下载视频
         for i, data in enumerate(urls):
             url = data['url']
             header = {
                 'Origin': 'https://www.bilibili.com', 'Referer': video_url,
             }
-            self.headers.update(header)
             try:
-                response = requests.get(url, headers=self.headers, verify=False, stream=True)
+                # 请求视频链接
+                response = get_page(url, header=header, **{
+                    'verify': False, 'stream': True
+                })
                 video_path = title + '/' + '{}.mp4'.format(i)
                 # 下载视频
                 with open(video_path, 'wb') as file:
@@ -102,7 +99,7 @@ class BiliDownload(object):
                         file.flush()
                         size += len(item)
                         print('\r' + '[下载进度]：%s %0.2f%%' % (
-                        '>' * int(size * 50 / content_size), float(size / content_size) * 100), end='')
+                            '>' * int(size * 50 / content_size), float(size / content_size) * 100), end='')
 
             except Exception as e:
                 print(e)
@@ -112,9 +109,7 @@ class BiliDownload(object):
         concatenate(path=title, dest=self.dest)
 
 if __name__ == '__main__':
-    # aid = sys.argv[1] 31705434    25249   28518492
-    aid = '28518492'
+    # aid = sys.argv[1] 31705434    25249   28518492 19852845
+    aid = '19852845'
     bili = BiliDownload(aid)
-    # bili.download_video()
-    bili.get_vedio_info()
-    bili.get_danmu()
+    bili.download_video()  # bili.get_vedio_info()  # bili.get_danmu()
