@@ -29,9 +29,8 @@ class VideoDownload(object):
         para = {
             'aid': aid,
         }
-        res = get_page(url, params=para)
-        info = res.json()
-        return info
+
+        return get_page(url, params=para)
 
     @classmethod
     def get_danmu(cls, cid):

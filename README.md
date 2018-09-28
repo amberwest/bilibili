@@ -7,4 +7,6 @@
 
 2. 运行models.py,创建表
 
-3. 在run.py中输入要下载的视频链接,运行下载视频
+3. 在终端修改表的字符集 `alter table danmu convert to character set utf8mb4`
+
+4. 在run.py中输入要下载的视频链接,运行下载视频

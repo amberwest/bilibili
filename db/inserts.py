@@ -6,7 +6,7 @@ from db.models import Video, VideoInfo, Danmu
 from utils import session_scope
 
 
-def insert(info, danmu, video):
+def insert(info, danmu, video=None):
     """持久化到mysql"""
     # 信息表
     stat = info['data']['stat']
@@ -37,15 +37,19 @@ def insert(info, danmu, video):
                   info=i)
         res.append(d)
 
-    # 视频表
-    v = Video(title=video['title'],
-              path=video['path'],
-              url=video['url'],
-              info=i,
-                  )
+    if video:
+        # 视频表
+        v = Video(title=video['title'],
+                  path=video['path'],
+                  url=video['url'],
+                  info=i,
+                      )
 
+        with session_scope(Session) as session:
+            session.add(i)
+            session.add_all(res)
+            session.add(v)
     with session_scope(Session) as session:
         session.add(i)
         session.add_all(res)
-        session.add(v)
 
