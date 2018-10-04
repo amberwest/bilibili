@@ -1,6 +1,8 @@
 # -*- coding:utf-8 -*-
 # Time: 2018/9/7 15:29
 import locale
+import logging.config
+import logging
 
 import os
 import subprocess
@@ -9,10 +11,11 @@ import re
 from contextlib import contextmanager
 
 import requests
+import yaml
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from setting import BASE_DIR
+from setting import *
 
 locale.getpreferredencoding()
 
@@ -46,7 +49,7 @@ def get_page(url, method='get', params=None, header={}, **kw):
         if response.status_code == 200:
             return response
     except Exception as e:
-        print('网页请求失败: ', e)
+        print(f'网页请求失败: {e}\n失败链接：{url}')
         return None
 
 def parse_url(url):
@@ -108,7 +111,6 @@ def concatenate(title, dest):
         print('视频合并失败：', e)
         return None
 
-
 @contextmanager
 def session_scope(Session):
     """
@@ -121,8 +123,31 @@ def session_scope(Session):
     try:
         yield session
         session.commit()
-    except:
+    except Exception as e:
         session.rollback()
-        raise
+        # raise
+        print(e)
     finally:
         session.close()
+
+def setup_logging(default_path='logging.yaml', default_level=LOGGER_LEVEL):
+    """配置日志"""
+    path = os.path.join(BASE_DIR, default_path)
+    if os.path.exists(path):
+        with open(path, 'rt') as f:
+            config = yaml.safe_load(f.read())
+            logging.config.dictConfig(config)
+
+    else:
+        logging.basicConfig(level=default_level)
+        print(f'the log setting path {default_path} does not exist')
+
+def get_logger(default_logger=LOGGER):
+    """返回logger"""
+    setup_logging()
+    logger_instance = logging.getLogger(default_logger)
+    return logger_instance
+
+if __name__ == '__main__':
+    logger = get_logger('video')
+    logger.info('test')

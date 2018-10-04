@@ -21,7 +21,7 @@ engine_string = 'mysql+pymysql://{user}:{pwd}@{host}/{db}?charset={charset}'.for
 engine = create_engine(engine_string,
                        pool_size=1,
                        max_overflow=10,
-                       echo=True,
+                       echo=ECHO,
                        encoding='utf-8',
                        pool_recycle=200000,
                        )

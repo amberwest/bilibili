@@ -109,3 +109,8 @@ class VideoDownload(object):
             'path': video_save_path
         }
         return video
+
+if __name__ == '__main__':
+    video_url = 'https://www.bilibili.com/video/av{}'.format(1007024)
+    b = VideoDownload.get_vedio_info(video_url)
+    print(b.json())
